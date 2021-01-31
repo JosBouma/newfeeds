@@ -30,7 +30,8 @@ export default {
         state.items[guid] = {
           title: getText(item, 'title'),
           date: new Date(getText(item, 'pubDate').replace(new RegExp(' CET$'), ' (CET)')),
-          host: '_' + a.hostname.replaceAll('.', '')
+          host: '_' + a.hostname.replaceAll('.', ''),
+          hidden: localStorage.getItem('rss-feed-' + guid) || false
         }
         state.count++
       })
@@ -41,6 +42,12 @@ export default {
         }
         return state.items[a].date > state.items[b].date ? -1 : 1
       })
+    },
+
+    HIDDEN (state, guid) {
+      window.console.log('hide', guid)
+      state.items[guid].hidden = true
+      localStorage.setItem('rss-feed-' + guid, true)
     }
   }
 }
