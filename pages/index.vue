@@ -1,8 +1,11 @@
 <template>
-  <div class="container">
-    <div v-for="(guid, idx) in sorted" :key="idx" :class="items[guid].host">
-      <span>{{ formatDate(items[guid].date) }}</span>
-      <a :href="guid">{{ items[guid].title }}</a>
+  <div class="main">
+    <div class="container">
+      <h1>Feed overzicht</h1>
+      <div v-for="(guid, idx) in sorted" :key="idx" :class="items[guid].host">
+        <span>{{ formatDate(items[guid].date) }}</span>
+        <a :href="guid">{{ items[guid].title }}</a>
+      </div>
     </div>
   </div>
 </template>
@@ -17,18 +20,16 @@ interface RssItem {
   host : string
 }
 
+interface StoreState {
+  items : { [key: string]: RssItem }
+  sorted : Array<string>
+  count : number
+}
+
 export default Vue.extend({
   name: 'NewsFeedPage',
   data () {
     return {
-      feeds: [
-        'https://www.waldnet.nl/script/rss.php',
-        'https://112fryslan.nl/feed/',
-        'https://feed.lc.nl/?service=rss',
-        'https://www.rtlnieuws.nl/rss.xml',
-        'http://feeds.feedburner.com/tweakers/mixed',
-        'https://www.rivm.nl/nieuws/rss.xml'
-      ],
       parser: new DOMParser(),
       interval: 0,
       getCache: true
@@ -37,22 +38,22 @@ export default Vue.extend({
 
   computed: {
     ...mapState({
-      items (state : any) : { [key: string]: RssItem } {
+      items (state : StoreState) : StoreState['items'] {
         return state.items
       },
 
-      sorted (state : any) : Array<string> {
+      sorted (state : StoreState) : Array<string> {
         return state.sorted
       },
 
-      count (state : any) : number {
+      count (state : StoreState) : number {
         return state.count
       }
     })
   },
 
   mounted () {
-    clearInterval(this.interval)
+    window.clearInterval(this.interval)
     this.interval = window.setInterval(this.requestFeeds.bind(this), 1000 * 60 * 5)
     this.requestFeeds()
   },
@@ -63,30 +64,14 @@ export default Vue.extend({
 
   methods: {
     async requestFeeds () {
-      const proxy = 'https://cors-anywhere.herokuapp.com/'
-      const _ = this
-      const timeout = 1000 * 60
-      for(let i = 0, c = this.feeds.length; i < c; i++) {
-        await this.fetchTimeout(proxy + this.feeds[i], { cache: this.getCache ? 'force-cache' : 'default' }, timeout).catch((e) => {
-          _.fetchTimeout(proxy + _.feeds[i], { cache: 'default' })
-        })
+      let docs : string[] = await fetch('/.netlify/functions/fetch').then(r => r.json())
+      for(let i = 0, c = docs.length; i < c; i++) {
+        this.$store.commit('ITEMS', this.parser.parseFromString(docs[i], 'text/xml'))
       }
-      this.getCache = false
     },
 
     formatDate (dt : Date) : string {
       return `${dt.toLocaleString('nl-NL', { weekday: 'short' })} ${dt.getDate()} ${dt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`
-    },
-
-    async fetchTimeout (url : string, options? : RequestInit, timeout? : number) : Promise<void> {
-      options = options || {}
-      const controller = new AbortController()
-      options.signal = controller.signal
-      if (timeout) {
-        window.setTimeout(controller.abort.bind(controller), timeout)
-      }
-      const xml = await fetch(url, options).then(r => r.text())
-      this.$store.commit('ITEMS', this.parser.parseFromString(xml, 'text/xml'))
     }
   }
 })
@@ -97,11 +82,26 @@ export default Vue.extend({
   margin: 0;
   padding: 0;
   text-decoration: none;
+  border: none;
+}
+
+html {
+  height: 100%;
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 12px;
+}
+
+#__nuxt,
+#__layout,
+.main {
+  min-height: 100%;
+}
+
+.container {
+  margin: 0 2vw;
 }
 
 a {
@@ -119,12 +119,8 @@ a:visited {
   color: #ccc;
 }
 
-.container {
-  margin: 0 10vw;
-}
-
 .container>div {
-  padding: 5px clamp(10px, 5vw, 120px);
+  padding: 5px;
   display: grid;
   grid-template-columns: auto auto 1fr;
   grid-gap: 2vw;
@@ -169,6 +165,18 @@ a:visited {
 .container>div._tweakersnet::before {
   content: "T";
   background: #9a0e36;
+}
+
+.container>div._wwwrivmnl::before {
+  content: 'R';
+  background: #f9e11e;
+  color: #000;
+  font-weight: 800;
+}
+
+.container>div._feedsnosnl::before {
+  content: "NOS";
+  background: #E61E14;
 }
 
 @media all and (max-width: 600px) {

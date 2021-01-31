@@ -13,6 +13,7 @@
   "dependencies": {
     "@nuxt/typescript-runtime": "^2.0.1",
     "core-js": "^3.8.3",
+    "netlify-cli": "^3.4.6",
     "nuxt": "^2.14.12"
   },
   "devDependencies": {

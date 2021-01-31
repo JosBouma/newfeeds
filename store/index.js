@@ -29,7 +29,7 @@ export default {
         state.sorted.push(guid)
         state.items[guid] = {
           title: getText(item, 'title'),
-          date: new Date(getText(item, 'pubDate')),
+          date: new Date(getText(item, 'pubDate').replace(new RegExp(' CET$'), ' (CET)')),
           host: '_' + a.hostname.replaceAll('.', '')
         }
         state.count++
