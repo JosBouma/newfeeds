@@ -61,6 +61,7 @@ export default Vue.extend({
     window.clearInterval(this.interval)
     this.interval = window.setInterval(this.requestFeeds.bind(this), 1000 * 60 * 5)
     this.requestFeeds({ cache: 'force-cache' })
+
   },
 
   destroyed () {
@@ -69,9 +70,9 @@ export default Vue.extend({
 
   methods: {
     async requestFeeds (options? : RequestInit) {
-      let docs : string[] = await fetch('/.netlify/functions/fetch', options).then(r => r.json())
+      let docs : [status: string, value: any] = await fetch('/.netlify/functions/fetch', options).then(r => r.json())
       for(let i = 0, c = docs.length; i < c; i++) {
-        this.$store.commit('ITEMS', this.parser.parseFromString(docs[i], 'text/xml'))
+        this.$store.commit('ITEMS', this.parser.parseFromString(docs[i].value, 'text/xml'))
       }
     },
 
@@ -81,6 +82,7 @@ export default Vue.extend({
 
     handleHidden (guid : string) {
       this.$store.commit('HIDDEN', guid)
+      this.$forceUpdate()
     }
   }
 })
@@ -141,6 +143,10 @@ a:visited {
   border-bottom: dotted 1px grey;
 }
 
+.container>div.hidden {
+  display: none;
+}
+
 button {
   display: grid;
   color: red;
@@ -150,7 +156,7 @@ button {
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  border-radius: 4px;
+  border-radius: 7px;
 }
 
 .container>div::before {
@@ -205,6 +211,11 @@ button {
   background: #E61E14;
 }
 
+.container>div._wwwnunl::before {
+  background: #1f2544;
+  content: "NU";
+}
+
 @media all and (max-width: 600px) {
   body {
     font-size: 10px;
@@ -221,6 +232,22 @@ button {
 
   .container>div {
     grid-gap: clamp(2px, 3vw, 10px);
+  }
+}
+
+@keyframes hide {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.5);
+  }
+  99% {
+    transform: scale(0.01);
+  }
+  100% {
+    transform: scale(0);
+    dislpay: none;
   }
 }
 </style>

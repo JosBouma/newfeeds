@@ -6,7 +6,8 @@ const feeds = [
   'https://www.rtlnieuws.nl/rss.xml',
   'http://feeds.feedburner.com/tweakers/mixed',
   'https://www.rivm.nl/nieuws/rss.xml',
-  'http://feeds.nos.nl/nosjournaal'
+  'httpz://feeds.nos.nl/nosjournaal',
+  'https://www.nu.nl/rss/Algemeen'
 ]
 
 const fetchAll = async () => {
@@ -14,13 +15,20 @@ const fetchAll = async () => {
   for (let i = 0, c = feeds.length; i < c; i++) {
     reqs[i] = fetch(feeds[i]).then(r => r.text())
   }
-  return await Promise.all(reqs)
+  return await Promise.allSettled(reqs)
 }
 
 const handler = async(event) => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify(await fetchAll())
+  try {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await fetchAll())
+    }
+  } catch (e) {
+    return {
+      statusCode: 500,
+      body: '["elp"]'
+    }
   }
 }
 
